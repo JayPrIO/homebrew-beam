@@ -9,32 +9,22 @@ brew tap jayprio/beam
 brew install beam
 ```
 
-## Prerequisites for this tap to actually work
+Installs a prebuilt binary — no Go toolchain required locally.
 
-This formula builds from the `beam-cli` repo's `main` branch (no tagged
-release exists yet), so before `brew tap`/`brew install` will succeed:
+## How it's built
 
-1. `beam-cli` must be pushed to `https://github.com/jayprio/beam-cli`
-   (it currently has no git remote configured).
-2. This directory must itself be a git repo, pushed to GitHub as
-   `https://github.com/jayprio/homebrew-beam` — Homebrew's tap
-   naming convention requires the `homebrew-` prefix, and `brew tap
-   jayprio/beam` expects to find it there.
+`jayprio/beam-cli`'s `.github/workflows/release.yml` builds darwin/amd64
+and darwin/arm64 binaries on every `vX.Y.Z` tag push and publishes them
+as release assets with sha256 checksums. `Formula/beam.rb` downloads
+the matching arch's tarball (`on_arm`/`on_intel`) and just installs the
+binary — no build step on the user's machine.
 
-Once both exist:
+## Releasing a new version
 
-```sh
-cd /Users/jayprajapati/Developer/go-projects/homebrew-beam
-git init
-git add .
-git commit -m "beam homebrew formula"
-git remote add origin git@github.com:jayprio/homebrew-beam.git
-git push -u origin main
-```
-
-## Updating to a tagged release
-
-Once `beam-cli` has a tagged release, swap `Formula/beam.rb`'s `url`/
-`version` for the commented-out versioned-tarball block (pin a real
-`sha256`, computed via `shasum -a 256` on the release tarball) instead
-of building off `main` — see the comments in the formula.
+1. Tag and push a new version in `beam-cli` (e.g. `git tag v0.2.0 &&
+   git push origin v0.2.0`) — this triggers the release build.
+2. Once the release's assets are up, download both tarballs and
+   compute their sha256 (`shasum -a 256 <file>`), or just fetch the
+   `.sha256` files CI publishes alongside them.
+3. Update `Formula/beam.rb`'s `version`, `url`s, and `sha256`s to
+   match, then commit and push.
